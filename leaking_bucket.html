@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leaking Bucket Rate Limiter</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            max-width: 600px;
+            width: 100%;
+            margin: 20px;
+        }
+
+        .container2 {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            width: 100%;
+            margin: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+            font-weight: bold;
+        }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 8px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin-top: 10px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #B95CF4;
+        }
+
+        .button-blue {
+            background-color: #2196F3;
+        }
+
+        .button-red {
+            background-color: #F44336;
+        }
+
+        .button-yellow {
+            background-color: #FFA500;
+        }
+
+        .button-purple {
+            background-color: #9C27B0;
+        }
+
+        .button-pink {
+            background-color: #FF69B4;
+        }
+
+        .button-brown {
+            background-color: #964B00;
+        }
+        
+        #token-container {
+            display: flex;
+            flex-wrap: wrap;
+            margin-top: 20px;
+            justify-content: center;
+            border: 2px dotted purple; /* Added border styling */
+            padding: 10px; /* Optional: Add padding for spacing */
+        }
+
+        .token {
+            width: 20px;
+            height: 20px;
+            background-color: #4CAF50;
+            margin: 5px;
+            border-radius: 50%;
+        }
+
+        .status {
+            margin-top: 20px;
+            font-size: 18px;
+            display: none;
+        }
+
+        .status.accepted {
+            color: green;
+        }
+
+        .status.rejected {
+            color: red;
+        }
+
+        #timer {
+            margin-top: 20px;
+            font-size: 16px;
+            color: #555;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: center;
+            border: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Different colored algorithm buttons -->
+        <button class="button-blue" onclick="openAlgorithm('token_bucket.html')">Token Bucket</button>
+        <button class="button-red" onclick="openAlgorithm('leaking_bucket.html')">Leaking Bucket</button>
+        <button class="button-yellow" onclick="openAlgorithm('fixed_window_counter.html')">Fixed Window Counter</button>
+        <button class="button-pink" onclick="openAlgorithm('sliding_window_log.html')">Sliding Window Log</button>
+        
+        <h1>Leaking Bucket Rate Limiter</h1>
+        <div class="form-group">
+            <label for="bucket_id">Bucket Size:</label>
+            <input type="number" id="bucket_id" placeholder="Enter Bucket Size">
+        </div>
+        <div class="form-group">
+            <label for="outflow-rate">Outflow Rate (per minute):</label>
+            <input type="number" id="outflow-rate" placeholder="Enter Outflow Rate">
+        </div>
+        <button class="button-purple" onclick="setupBucket()">Set Bucket</button>
+
+        <div id="token-container" class="hidden"></div>
+        <div class="status hidden" id="status"></div>
+
+        <table id="timer" class="hidden">
+            <tr>
+                <th colspan="2">Time Information</th>
+            </tr>
+            <tr>
+                <td>Time passed:</td>
+                <td id="time-passed">0 minutes 0 seconds</td>
+            </tr>
+            <tr>
+                <td>Time left for outflow:</td>
+                <td id="time-left">0 minutes 0 seconds</td>
+            </tr>
+        </table>
+
+        <button onclick="sendRequest()" class="hidden button-purple" id="send-request-button">Send Request</button>
+    </div>
+
+    <div class="container2">
+        <h2>Leaking Bucket Rate Limiter</h2>
+        <p>The leaking bucket algorithm is similar to the token bucket except that requests are processed at a fixed rate. It is usually implemented with a first-in-first-out (FIFO) queue. </p>
+        <p>Once the queue is full, no more tokens are processed until some tokens are dropped from queue.</p>
+        <p>Algorithm Works as:</p>
+        <ul>
+            <li>When a request arrives, the system checks if the queue is full. If it is not full, the request is added to the queue.</li>
+            <li>Otherwise, the request is dropped.</li>
+            <li>Requests are pulled from the queue and processed at regular intervals.</li>
+        </ul>
+
+        <h3>Parameters</h3>
+        <ul>
+            <li>Bucket Size: : It is equal to the queue size. The queue holds the requests to be processed at a fixed rate.</li>
+            <li>Outflow rate: It defines how many requests can be processed at a fixed rat.</li>e
+        </ul>
+
+        <h3>Pros:</h3>
+        <ul>
+            <li>Memory efficient given the limited queue size.</li>
+        </ul>
+    
+        <h3>Cons:</h3>
+        <ul>
+            <li>Requires tuning of two parameters: bucket size and outflow rate.</li>
+            <li>A burst of traffic fills up the queue with old requests, and if they are not processed in time, recent requests will be rate limited.</li>
+        </ul>
+    </div>
+
+    <script>
+        let bucketId = 0;
+        let outflowRate = 0;
+        let queueSize = 0;
+        let processedRequests = 0;
+
+        function setupBucket() {
+            bucketId = document.getElementById('bucket_id').value;
+            outflowRate = document.getElementById('outflow-rate').value;
+            
+            fetch('http://127.0.0.1:8000/setup_leaking_bucket', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ bucket_size: bucketId, outflow_rate_per_minute: outflowRate })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === "bucket initialized") {
+                    bucketId = parseInt(data.bucket_id);
+                    outflowRate = parseInt(data.outflow_rate_per_minute);
+                    queueSize = 0;
+                    updateDisplay();
+                    setInterval(processRequests, 60000); // Call processRequests every minute
+        
+                    document.getElementById('token-container').classList.remove('hidden');
+                    document.getElementById('send-request-button').classList.remove('hidden');
+                    document.getElementById('timer').classList.remove('hidden');
+        
+                    // Start timer
+                    let startTime = Date.now();
+                    updateTimer(startTime);
+        
+                    // Update timer every second
+                    setInterval(() => {
+                        updateTimer(startTime);
+                    }, 1000); // Update every second
+                }
+            });
+        }
+        
+        function updateTimer(startTime) {
+            const elapsedTime = Math.floor((Date.now() - startTime) / 1000); // in seconds
+            const timeLeft = 60 - (elapsedTime % 60); // Convert outflowRate from minutes to seconds
+        
+            document.getElementById('time-passed').textContent = formatTime(elapsedTime);
+            document.getElementById('time-left').textContent = formatTime(timeLeft);
+        }
+        
+        function formatTime(seconds) {
+            const minutes = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${minutes} minutes ${secs} seconds`;
+        }
+
+        function processRequests() {
+            fetch('http://127.0.0.1:8000/process_requests', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    queueSize = data.queue_size;
+                    processedRequests = data.processed_requests;
+                    updateDisplay();
+                });
+        }
+
+        function sendRequest() {
+            fetch('http://127.0.0.1:8000/add_request_to_q', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    queueSize = data.queue_size;
+                    updateDisplay();
+
+                    const statusDiv = document.getElementById('status');
+                    statusDiv.textContent = data.status;
+                    statusDiv.className = 'status ' + (data.status.includes('Added') ? 'accepted' : 'rejected');
+                    statusDiv.style.display = 'block';
+
+                    setTimeout(() => {
+                        statusDiv.style.display = 'none';
+                    }, 1000);
+                });
+        }
+
+        function updateDisplay() {
+            const tokenContainer = document.getElementById('token-container');
+            tokenContainer.innerHTML = '';
+
+            for (let i = 0; i < queueSize; i++) {
+                const tokenDiv = document.createElement('div');
+                tokenDiv.className = 'token';
+                tokenContainer.appendChild(tokenDiv);
+            }
+        }
+
+        function openAlgorithm(url) {
+            window.open(url, '_blank');
+        }
+    </script>
+</body>
+</html>

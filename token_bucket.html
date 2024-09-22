@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Token Bucket Rate Limiter</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            max-width: 600px;
+            width: 100%;
+            margin: 20px;
+        }
+
+        .container2 {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            width: 100%;
+            margin: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+            font-weight: bold;
+        }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 8px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin-top: 10px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #B95CF4;
+        }
+
+        .button-blue {
+            background-color: #2196F3;
+        }
+
+        .button-red {
+            background-color: #F44336;
+        }
+
+        .button-yellow {
+            background-color: #FFA500;
+        }
+
+        .button-purple {
+            background-color: #9C27B0;
+        }
+
+        .button-pink {
+            background-color: #FF69B4;
+        }
+
+        .button-brown {
+            background-color: #964B00;
+        }
+        
+
+        #token-container {
+            display: flex;
+            flex-wrap: wrap;
+            margin-top: 20px;
+            justify-content: center;
+            border: 2px dotted purple; /* Added border styling */
+            padding: 10px; /* Optional: Add padding for spacing */
+        }
+
+        .token {
+            width: 20px;
+            height: 20px;
+            background-color: #4CAF50;
+            margin: 5px;
+            border-radius: 50%;
+        }
+
+        .status {
+            margin-top: 20px;
+            font-size: 18px;
+            display: none;
+        }
+
+        .status.accepted {
+            color: green;
+        }
+
+        .status.rejected {
+            color: red;
+        }
+
+        #timer {
+            margin-top: 20px;
+            font-size: 16px;
+            color: #555;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: center;
+            border: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        h2 {
+            color: #333;
+            border-bottom: 2px solid #333;
+            padding-bottom: 5px;
+            margin-bottom: 10px;
+        }
+        
+        ul {
+            list-style-type: disc;
+            color: #555;
+        }
+        
+        ul li {
+            margin-bottom: 5px;
+        }
+        
+        ul li::before {
+            content: '\2022'; /* Bullet character */
+            color: #666;
+            font-weight: bold;
+            display: inline-block;
+            width: 1em;
+            margin-left: -1em;
+        }
+        
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Different colored algorithm buttons -->
+        <button class="button-blue" onclick="openAlgorithm('token_bucket.html')">Token Bucket</button>
+        <button class="button-red" onclick="openAlgorithm('leaking_bucket.html')">Leaking Bucket</button>
+        <button class="button-yellow" onclick="openAlgorithm('fixed_window_counter.html')">Fixed Window Counter</button>
+        <button class="button-pink" onclick="openAlgorithm('sliding_window_log.html')">Sliding Window Log</button>
+
+        <!-- This is where the algorithm content will be loaded -->
+        <div id="algorithmContent" class="algorithm-content"></div>
+        
+        <h1>Token Bucket Rate Limiter</h1>
+        <div class="form-group">
+            <label for="capacity">Capacity:</label>
+            <input type="number" id="capacity" placeholder="Enter capacity">
+        </div>
+        <div class="form-group">
+            <label for="refill-rate">Refill Rate (per minute):</label>
+            <input type="number" id="refill-rate" placeholder="Enter refill rate">
+        </div>
+        <button class="button-purple" onclick="setupBucket()">Set Bucket</button>
+
+        <div id="token-container" class="hidden"></div>
+        <div class="status hidden" id="status"></div>
+
+        <table id="timer" class="hidden">
+            <tr>
+                <th colspan="2">Time Information</th>
+            </tr>
+            <tr>
+                <td>Time passed:</td>
+                <td id="time-passed">0 minutes 0 seconds</td>
+            </tr>
+            <tr>
+                <td>Time left for refill:</td>
+                <td id="time-left">0 minutes 0 seconds</td>
+            </tr>
+        </table>
+
+        <button onclick="sendRequest()" class="hidden button-purple" id="send-request-button">Send Request</button>
+
+
+    </div>
+
+    <div class="container2">
+        <h2>Token Bucket Rate Limiter</h2>
+        <p>A token bucket is a container that has a pre-defined capacity. Tokens are added to the bucket at a fixed rate periodically.</p>
+        <p>Once the bucket is full, no more tokens are added until some tokens are consumed.</p>
+        <p>Each request consumes one token. When a request arrives:</p>
+        <ul>
+            <li>If there are enough tokens in the bucket, one token is taken out for each request and the request is accepted.</li>
+            <li>If there are not enough tokens in the bucket, the request is rejected.</li>
+        </ul>
+
+        <h3>Parameters:</h3>
+        <ul>
+            <li>Bucket Size: : The maximum number of tokens allowed in the bucket</li>
+            <li>Outflow rate: : Number of tokens put into the bucket every minute</li>
+        </ul>
+    
+        <h3>Pros:</h3>
+        <ul>
+            <li>Easy to implement.</li>
+            <li>Memory efficient.</li>
+            <li>Allows bursts of traffic for short periods.</li>
+        </ul>
+    
+        <h3>Cons:</h3>
+        <ul>
+            <li>Requires tuning of two parameters: bucket size and token refill rate.</li>
+            <li>Challenging to predict exact behavior in dynamic traffic scenarios.</li>
+        </ul>
+    </div>
+
+    <script>
+        let bucketCapacity = 0;
+        let refillRate = 0;
+        let tokens = 0;
+
+        function setupBucket() {
+            const capacity = document.getElementById('capacity').value;
+            const refillRatePerMinute = document.getElementById('refill-rate').value;
+            
+            fetch('http://127.0.0.1:8000/setup_token_bucket', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ capacity: capacity, refill_rate_per_minute: refillRatePerMinute })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === "Bucket Initialised") {
+                    bucketCapacity = parseInt(data.capacity);
+                    refillRate = parseInt(data.refill_rate_per_minute);
+                    tokens = bucketCapacity;
+                    updateTokensDisplay();
+                    setInterval(refillTokens, 60000); // Convert minutes to milliseconds
+        
+                    document.getElementById('token-container').classList.remove('hidden');
+                    document.getElementById('send-request-button').classList.remove('hidden');
+                    document.getElementById('timer').classList.remove('hidden');
+        
+                    // Start timer
+                    let startTime = Date.now();
+                    updateTimer(startTime);
+        
+                    // Update timer every second
+                    setInterval(() => {
+                        updateTimer(startTime);
+                    }, 1000); // Update every second
+                }
+            });
+        }
+        
+        function updateTimer(startTime) {
+            const elapsedTime = Math.floor((Date.now() - startTime) / 1000); // in seconds
+            const timeLeft = (60) - (elapsedTime % (60)); // Convert refillRate from minutes to seconds
+        
+            document.getElementById('time-passed').textContent = formatTime(elapsedTime);
+            document.getElementById('time-left').textContent = formatTime(timeLeft);
+        }
+        
+        function formatTime(seconds) {
+            const minutes = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${minutes} minutes ${secs} seconds`;
+        }
+
+        function refillTokens() {
+            fetch('http://127.0.0.1:8000/refill', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    tokens = data.tokens;
+                    updateTokensDisplay();
+                });
+        }
+
+function sendRequest() {
+    fetch('http://127.0.0.1:8000/handle_token_bucket', { method: 'POST' })
+        .then(response => response.json())
+        .then(data => {
+            tokens = data.tokens;
+            updateTokensDisplay();
+
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = data.status === 'accepted' ? 'Request Accepted' : 'Request Rejected';
+            statusDiv.className = 'status ' + (data.status === 'accepted' ? 'accepted' : 'rejected');
+            statusDiv.style.display = 'block';
+
+            // Use setTimeout to add 'hidden' class after 1000ms (1 second)
+            setTimeout(() => {
+                statusDiv.style.display = 'none'; // or statusDiv.classList.add('hidden');
+            }, 1000);
+        });
+}
+
+        function updateTokensDisplay() {
+            const tokenContainer = document.getElementById('token-container');
+            tokenContainer.innerHTML = '';
+        
+            if (tokens > 0) {
+                for (let i = 0; i < tokens; i++) {
+                    const tokenDiv = document.createElement('div');
+                    tokenDiv.className = 'token';
+                    tokenContainer.appendChild(tokenDiv);
+                }
+            }
+        }
+
+        function openAlgorithm(url) {
+            window.open(url, '_blank');
+        }
+    </script>
+</body>
+</html>

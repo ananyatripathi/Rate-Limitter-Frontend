@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fixed Window Counter Rate Limiter</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            max-width: 600px;
+            width: 100%;
+            margin: 20px;
+        }
+
+        .container2 {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            width: 100%;
+            margin: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+            font-weight: bold;
+        }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 8px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin-top: 10px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #B95CF4;
+        }
+
+        .button-blue {
+            background-color: #2196F3;
+        }
+
+        .button-red {
+            background-color: #F44336;
+        }
+
+        .button-yellow {
+            background-color: #FFA500;
+        }
+
+        .button-purple {
+            background-color: #9C27B0;
+        }
+
+        .button-pink {
+            background-color: #FF69B4;
+        }
+
+        .button-brown {
+            background-color: #964B00;
+        }
+
+        #token-container {
+            display: flex;
+            flex-wrap: wrap;
+            margin-top: 20px;
+            justify-content: center;
+            border: 2px dotted purple;
+            padding: 10px;
+        }
+
+        .token {
+            width: 20px;
+            height: 20px;
+            background-color: #4CAF50;
+            margin: 5px;
+            border-radius: 50%;
+        }
+
+        .status {
+            margin-top: 20px;
+            font-size: 18px;
+            display: none;
+        }
+
+        .status.accepted {
+            color: green;
+        }
+
+        .status.rejected {
+            color: red;
+        }
+
+        #timer {
+            margin-top: 20px;
+            font-size: 16px;
+            color: #555;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: center;
+            border: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <button class="button-blue" onclick="openAlgorithm('token_bucket.html')">Token Bucket</button>
+        <button class="button-red" onclick="openAlgorithm('leaking_bucket.html')">Leaking Bucket</button>
+        <button class="button-yellow" onclick="openAlgorithm('fixed_window_counter.html')">Fixed Window Counter</button>
+        <button class="button-pink" onclick="openAlgorithm('sliding_window_log.html')">Sliding Window Log</button>
+        
+        <h1>Fixed Window Counter Rate Limiter</h1>
+        <div class="form-group">
+            <label for="max-requests">Max Requests:</label>
+            <input type="number" id="max-requests" placeholder="Enter Max Requests">
+        </div>
+        <div class="form-group">
+            <label for="time-interval">Time Interval (seconds):</label>
+            <input type="number" id="time-interval" placeholder="Enter Time Interval">
+        </div>
+        <button class="button-purple" onclick="setupBucket()">Set Bucket</button>
+
+        <div id="token-container" class="hidden"></div>
+        <div class="status hidden" id="status"></div>
+
+        <table id="timer" class="hidden">
+            <tr>
+                <th colspan="2">Time Information</th>
+            </tr>
+            <tr>
+                <td>Time passed:</td>
+                <td id="time-passed">0 minutes 0 seconds</td>
+            </tr>
+            <tr>
+                <td>Time left for new interval:</td>
+                <td id="time-left">0 minutes 0 seconds</td>
+            </tr>
+        </table>
+
+        <button onclick="sendRequest()" class="hidden button-purple" id="send-request-button">Send Request</button>
+    </div>
+
+    <div class="container2">
+        <h2>Fixed Window Counter</h2>
+        <p>Fixed window counter algorithm works as follows:</p>
+        <ul>
+            <li>The algorithm divides the timeline into fix-sized time windows and assign a counter for each window.</li>
+            <li>Each request increments the counter by one</li>
+            <li>Once the counter reaches the pre-defined threshold, new requests are dropped until a new time window starts.</li>
+        </ul>
+
+        <h3>Parameters</h3>
+        <ul>
+            <li>Max Requests: : Maximum requests allowed in each time interval.</li>
+            <li>Time Interval: Fixed Size Intervals in Seconds. </li>
+        </ul>
+
+        <h3>Pros:</h3>
+        <ul>
+            <li>Memory efficient.</li>
+            <li>Easy to understand.</li>
+            <li>Resetting available quota at the end of a unit time window fits certain use cases.</li>
+        </ul>
+    
+        <h3>Cons:</h3>
+        <ul>
+            <li>Spike in traffic at the edges of a window could cause more requests than the allowed quota to go through.</li>
+        </ul>
+    </div>
+
+    <script>
+        let maxRequests = 0;
+        let timeInterval = 0;
+        let numRequests = 0;
+
+        function setupBucket() {
+            maxRequests = document.getElementById('max-requests').value;
+            timeInterval = document.getElementById('time-interval').value;
+            
+            fetch('http://127.0.0.1:8000/setup_fixed_window_counter', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ max_number_req: maxRequests, time_interval: timeInterval })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === "bucket initialized") {
+                    maxRequests = parseInt(data.max_number_req);
+                    timeInterval = parseInt(data.time_interval);
+                    numRequests = 0;
+                    updateDisplay();
+                    setInterval(handleNewTimeframe, timeInterval * 1000); // Call handleNewTimeframe every timeInterval seconds
+        
+                    document.getElementById('token-container').classList.remove('hidden');
+                    document.getElementById('send-request-button').classList.remove('hidden');
+                    document.getElementById('timer').classList.remove('hidden');
+        
+                    // Start timer
+                    let startTime = Date.now();
+                    updateTimer(startTime);
+        
+                    // Update timer every second
+                    setInterval(() => {
+                        updateTimer(startTime);
+                    }, 1000); // Update every second
+                }
+            });
+        }
+
+        function updateTimer(startTime) {
+            const elapsedTime = Math.floor((Date.now() - startTime) / 1000); // in seconds
+            const timeLeft = timeInterval - (elapsedTime % timeInterval); // Calculate time left for the new interval
+        
+            document.getElementById('time-passed').textContent = formatTime(elapsedTime);
+            document.getElementById('time-left').textContent = formatTime(timeLeft);
+        }
+
+        function formatTime(seconds) {
+            const minutes = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${minutes} minutes ${secs} seconds`;
+        }
+
+        function handleNewTimeframe() {
+            fetch('http://127.0.0.1:8000/handle_new_timeframe', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    numRequests = data.updated_req_arr.length;
+                    updateDisplay();
+                });
+        }
+
+        function sendRequest() {
+            fetch('http://127.0.0.1:8000/handle_request_fixed_window_counter', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    numRequests = data.num_of_request;
+                    updateDisplay();
+
+                    const statusDiv = document.getElementById('status');
+                    statusDiv.textContent = data.status;
+                    statusDiv.className = 'status ' + (data.status.includes('Accepted') ? 'accepted' : 'rejected');
+                    statusDiv.style.display = 'block';
+
+                    setTimeout(() => {
+                        statusDiv.style.display = 'none';
+                    }, 1000);
+                });
+        }
+
+        function updateDisplay() {
+            const tokenContainer = document.getElementById('token-container');
+            tokenContainer.innerHTML = '';
+
+            for (let i = 0; i < numRequests; i++) {
+                const tokenDiv = document.createElement('div');
+                tokenDiv.className = 'token';
+                tokenContainer.appendChild(tokenDiv);
+            }
+        }
+
+        function openAlgorithm(url) {
+            window.open(url, '_blank');
+        }
+    </script>
+</body>
+</html>
