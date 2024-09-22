@@ -269,7 +269,7 @@
             const capacity = document.getElementById('capacity').value;
             const refillRatePerMinute = document.getElementById('refill-rate').value;
             
-            fetch('http://127.0.0.1:8000/setup_token_bucket', {
+            fetch('https://rate-limitter-backend.vercel.app/setup_token_bucket', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -316,7 +316,7 @@
         }
 
         function refillTokens() {
-            fetch('http://127.0.0.1:8000/refill', { method: 'POST' })
+            fetch('https://rate-limitter-backend.vercel.app/refill', { method: 'POST' })
                 .then(response => response.json())
                 .then(data => {
                     tokens = data.tokens;
@@ -325,7 +325,7 @@
         }
 
 function sendRequest() {
-    fetch('http://127.0.0.1:8000/handle_token_bucket', { method: 'POST' })
+    fetch('https://rate-limitter-backend.vercel.app/handle_token_bucket', { method: 'POST' })
         .then(response => response.json())
         .then(data => {
             tokens = data.tokens;
