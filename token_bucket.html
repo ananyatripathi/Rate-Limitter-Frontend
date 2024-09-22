@@ -278,7 +278,7 @@
             })
             .then(response => response.json())
             .then(data => {
-                if (data.status === "Bucket Initialised") {
+                if (data.status === "Bucket Initialized") {
                     bucketCapacity = parseInt(data.capacity);
                     refillRate = parseInt(data.refill_rate_per_minute);
                     tokens = bucketCapacity;
