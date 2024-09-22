@@ -237,7 +237,7 @@
             bucketId = document.getElementById('bucket_id').value;
             outflowRate = document.getElementById('outflow-rate').value;
             
-            fetch('http://127.0.0.1:8000/setup_leaking_bucket', {
+            fetch('https://rate-limitter-backend.vercel.app/setup_leaking_bucket', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -284,7 +284,7 @@
         }
 
         function processRequests() {
-            fetch('http://127.0.0.1:8000/process_requests', { method: 'POST' })
+            fetch('https://rate-limitter-backend.vercel.app/process_requests', { method: 'POST' })
                 .then(response => response.json())
                 .then(data => {
                     queueSize = data.queue_size;
@@ -294,7 +294,7 @@
         }
 
         function sendRequest() {
-            fetch('http://127.0.0.1:8000/add_request_to_q', { method: 'POST' })
+            fetch('https://rate-limitter-backend.vercel.app/add_request_to_q', { method: 'POST' })
                 .then(response => response.json())
                 .then(data => {
                     queueSize = data.queue_size;
