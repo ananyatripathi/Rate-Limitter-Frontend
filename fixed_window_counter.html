@@ -234,7 +234,7 @@
             maxRequests = document.getElementById('max-requests').value;
             timeInterval = document.getElementById('time-interval').value;
             
-            fetch('http://127.0.0.1:8000/setup_fixed_window_counter', {
+            fetch('https://rate-limitter-backend.vercel.app/setup_fixed_window_counter', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -281,7 +281,7 @@
         }
 
         function handleNewTimeframe() {
-            fetch('http://127.0.0.1:8000/handle_new_timeframe', { method: 'POST' })
+            fetch('https://rate-limitter-backend.vercel.app/handle_new_timeframe', { method: 'POST' })
                 .then(response => response.json())
                 .then(data => {
                     numRequests = data.updated_req_arr.length;
@@ -290,7 +290,7 @@
         }
 
         function sendRequest() {
-            fetch('http://127.0.0.1:8000/handle_request_fixed_window_counter', { method: 'POST' })
+            fetch('https://rate-limitter-backend.vercel.app/handle_request_fixed_window_counter', { method: 'POST' })
                 .then(response => response.json())
                 .then(data => {
                     numRequests = data.num_of_request;
