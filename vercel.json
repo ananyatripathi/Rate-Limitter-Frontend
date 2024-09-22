@@ -1,7 +1,7 @@
 {
   "routes": [
     { "src": "/fixed_counter_window", "dest": "/fixed_counter_window.html" },
-    { "src": "/token_bucket", "dest": "/token_bucket.html" },
+    { "src": "/", "dest": "/token_bucket.html" },
     { "src": "/leaking_bucket", "dest": "/leaking_bucket.html" },
     { "src": "/sliding_window_log", "dest": "/sliding_window_log.html" }
   ]
